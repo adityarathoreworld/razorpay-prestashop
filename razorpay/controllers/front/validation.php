@@ -2,15 +2,25 @@
 
 class RazorpayValidationModuleFrontController extends ModuleFrontController
 {
+    
     public function postProcess()
     {
-
+     
         $key_id            = Configuration::get('RAZORPAY_KEY_ID');
         $key_secret        = Configuration::get('RAZORPAY_KEY_SECRET');
         $razorpay_payment_id = $_REQUEST['razorpay_payment_id'];
         $cart_id        = $_REQUEST['merchant_order_id'];
+        $order_currency = '';
 
         $cart = new Cart($cart_id);
+        
+        $currencies = Currency::getCurrencies();
+
+        foreach ($currencies as $currency) {
+            if ($currency['id_currency'] == $cart->id_currency) {
+                $order_currency = $currency['iso_code'];
+            }
+        }
 
         $razorpay = new Razorpay();
 
@@ -21,7 +31,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         try {
             $url = 'https://api.razorpay.com/v1/payments/'.$razorpay_payment_id.'/capture';
-            $fields_string="amount=$amount";
+            $fields_string="amount=$amount&currency=".$order_currency;
 
             //cURL Request
             $ch = curl_init();
